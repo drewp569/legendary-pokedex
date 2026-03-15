@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IGT Workforce Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+  --navy:#1e3a5f; --navy2:#264d7a; --blue:#2d7dd2; --amber:#f0a500;
+  --green:#27ae60; --red:#e74c3c; --orange:#e67e22;
+  --bg:#f0f4f8; --card:#fff; --text:#2c3e50; --muted:#7f8c8d;
+  --border:#dde3ed; --sh:0 2px 8px rgba(0,0,0,.08);
+  --sh2:0 4px 20px rgba(0,0,0,.14); --r:8px; --sw:232px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+#app{display:flex;min-height:100vh}
+/* ── Sidebar ── */
+#sidebar{width:var(--sw);background:var(--navy);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100}
+.sb-brand{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-brand h1{font-size:13px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.6px}
+.sb-brand p{font-size:11px;color:rgba(255,255,255,.45);margin-top:3px}
+.sb-nav{flex:1;padding:10px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.72);transition:all .15s;border-left:3px solid transparent;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.active{background:rgba(45,125,210,.28);color:#fff;border-left-color:var(--blue)}
+.nav-item i{width:16px;text-align:center;font-size:13px}
+.sb-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1);font-size:10px;color:rgba(255,255,255,.3)}
+/* ── Main ── */
+#main{margin-left:var(--sw);flex:1}
+.section{display:none;padding:28px 32px;min-height:100vh}
+.section.active{display:block}
+.sec-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.sec-hdr-left h2{font-size:21px;font-weight:700;color:var(--navy)}
+.sec-hdr-left p{font-size:12px;color:var(--muted);margin-top:3px}
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;text-decoration:none}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:#2568b5}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border)}.btn-outline:hover{background:var(--bg)}
+.btn-amber{background:var(--amber);color:#fff}.btn-amber:hover{background:#d4920a}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover{background:#c0392b}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-icon{padding:5px 7px;background:transparent;border:none;cursor:pointer;color:var(--muted);border-radius:4px}
+.btn-icon:hover{background:var(--bg);color:var(--text)}
+/* ── Cards ── */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh)}
+.card-body{padding:20px}
+/* ── Summary cards ── */
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:28px}
+.sc{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:18px 20px;cursor:pointer;border-left:4px solid transparent;transition:box-shadow .15s}
+.sc:hover{box-shadow:var(--sh2)}
+.sc.blue{border-left-color:var(--blue)}.sc.green{border-left-color:var(--green)}
+.sc.amber{border-left-color:var(--amber)}.sc.red{border-left-color:var(--red)}
+.sc-val{font-size:34px;font-weight:700;color:var(--navy);line-height:1}
+.sc-lbl{font-size:11px;color:var(--muted);margin-top:5px;text-transform:uppercase;letter-spacing:.4px}
+.sc-ico{font-size:22px;opacity:.18;float:right;margin-top:-2px}
+/* ── Badges ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.b-green{background:#d5f5e3;color:#1e8449}.b-blue{background:#d6eaf8;color:#1a5276}
+.b-amber{background:#fef9e7;color:#9a6700;border:1px solid #f0a500}
+.b-red{background:#fdedec;color:#922b21}.b-gray{background:#f2f3f4;color:#555}
+/* ── Org Tree ── */
+.org-wrap{overflow-x:auto;padding:20px 0 10px}
+.org-tree{display:flex;flex-direction:column;align-items:center;gap:0;min-width:700px}
+.org-row{display:flex;justify-content:center;gap:16px;position:relative}
+.org-row+.org-row{margin-top:0}
+.org-connector-wrap{display:flex;justify-content:center}
+.org-vline{width:2px;height:20px;background:var(--border);margin:0 auto}
+.org-hline-wrap{display:flex;align-items:flex-start;justify-content:center;position:relative}
+.org-hline{height:2px;background:var(--border)}
+.org-branch-wrap{display:flex;flex-direction:column;align-items:center}
+.org-branch-vline{width:2px;height:20px;background:var(--border)}
+.org-node{border-radius:var(--r);padding:10px 14px;text-align:center;min-width:155px;border:2px solid var(--border)}
+.org-node.l0{background:var(--navy);color:#fff;border-color:var(--navy)}
+.org-node.l1{background:var(--blue);color:#fff;border-color:var(--blue)}
+.org-node.l2{background:#fff;border-color:#5b9fd8;color:var(--navy)}
+.org-node.l3{background:#f8fafc;border-color:var(--border);font-size:11px;min-width:120px;color:var(--text)}
+.org-node-title{font-size:12px;font-weight:600;line-height:1.3}
+.org-node-sub{font-size:10px;opacity:.7;margin-top:3px}
+/* ── Position accordion ── */
+.pos-list{display:flex;flex-direction:column;gap:12px;margin-top:24px}
+.pos-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.pos-card-hdr{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;border-bottom:1px solid transparent}
+.pos-card-hdr:hover{background:#fafbfc}
+.pos-card.open .pos-card-hdr{border-bottom-color:var(--border)}
+.pos-badge{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.pos-card-hdr h3{font-size:14px;font-weight:600;flex:1}
+.pos-card-hdr .chevron{color:var(--muted);transition:transform .2s}
+.pos-card.open .chevron{transform:rotate(180deg)}
+.pos-body{display:none;padding:16px 18px}
+.pos-card.open .pos-body{display:block}
+.raa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.raa-col{}
+.raa-col-hdr{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:7px 10px;border-radius:var(--r) var(--r) 0 0}
+.raa-col-hdr.rh{background:#eaf4fb;color:#1a5276}.raa-col-hdr.ah{background:#eafaf1;color:#1e8449}.raa-col-hdr.ac{background:#fef9e7;color:#9a6700}
+.raa-items{border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);overflow:hidden}
+.raa-item{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;line-height:1.45}
+.raa-item:last-child{border-bottom:none}
+.raa-dot{width:5px;height:5px;border-radius:50%;background:var(--blue);margin-top:5px;flex-shrink:0}
+.raa-item-text{flex:1}
+.raa-item-acts{display:none;gap:2px;flex-shrink:0}
+.raa-item:hover .raa-item-acts{display:flex}
+.raa-edit-row{padding:6px 10px;border-top:1px solid var(--border)}
+.raa-edit-row textarea{width:100%;font-size:12px;border:1px solid var(--border);border-radius:4px;padding:4px 6px;resize:vertical;min-height:54px;font-family:inherit}
+.raa-edit-row textarea:focus{outline:none;border-color:var(--blue)}
+.raa-add-btn{display:flex;align-items:center;gap:6px;padding:6px 10px;font-size:12px;color:var(--blue);cursor:pointer;border-top:1px solid var(--border)}
+.raa-add-btn:hover{background:#f5faff}
+/* ── Data table ── */
+.tbl-wrap{overflow-x:auto}
+table.dtbl{width:100%;border-collapse:collapse;font-size:13px}
+table.dtbl th{background:var(--bg);color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;text-align:left;border-bottom:2px solid var(--border)}
+table.dtbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.dtbl tr:hover td{background:#fafbfc}
+table.dtbl tr:last-child td{border-bottom:none}
+.gap-neg{color:var(--red);font-weight:600}.gap-pos{color:var(--green);font-weight:600}.gap-zero{color:var(--muted)}
+/* ── Member cards ── */
+.members-filters{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.mc{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;transition:box-shadow .15s}
+.mc:hover{box-shadow:var(--sh2)}
+.mc-hdr{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+.mc-avatar{width:40px;height:40px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
+.mc-info h3{font-size:14px;font-weight:600}
+.mc-info p{font-size:12px;color:var(--muted)}
+.mc-arrow{margin-left:auto;color:var(--muted);transition:transform .2s}
+.mc.open .mc-arrow{transform:rotate(180deg)}
+.mc-body{display:none;padding:0 16px 14px;border-top:1px solid var(--border)}
+.mc.open .mc-body{display:block}
+.mc-row{display:flex;gap:8px;padding:5px 0;font-size:12px;border-bottom:1px solid var(--border)}
+.mc-row:last-child{border-bottom:none}
+.mc-lbl{color:var(--muted);width:72px;flex-shrink:0;font-weight:500}
+.skills-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.skill-tag{background:#eaf4fb;color:#1a5276;padding:2px 8px;border-radius:10px;font-size:11px}
+/* ── Goals ── */
+.goals-filters{display:flex;gap:12px;margin-bottom:20px;align-items:center;flex-wrap:wrap}
+.goals-list{display:flex;flex-direction:column;gap:12px}
+.gc{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:16px}
+.gc-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.gc-title{font-size:14px;font-weight:600;flex:1}
+.gc-who{font-size:12px;color:var(--muted);margin-top:2px}
+.gc-meta{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.progress-wrap{background:var(--bg);border-radius:4px;height:7px;margin-top:10px}
+.progress-bar{height:7px;border-radius:4px;background:var(--blue);transition:width .3s}
+.pb-green{background:var(--green)}.pb-red{background:var(--red)}.pb-amber{background:var(--amber)}
+/* ── Reports ── */
+.reports-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.rep-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:20px;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.rep-card:hover{border-color:var(--blue);box-shadow:var(--sh2)}
+.rep-ico{font-size:30px;color:var(--blue);margin-bottom:10px}
+.rep-title{font-size:14px;font-weight:600;margin-bottom:5px}
+.rep-desc{font-size:12px;color:var(--muted);line-height:1.5}
+/* ── Form ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.form-ctrl{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:#fff;font-family:inherit}
+.form-ctrl:focus{outline:none;border-color:var(--blue)}
+/* ── Modal ── */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+#overlay.open{display:flex}
+.modal{background:#fff;border-radius:var(--r);box-shadow:var(--sh2);width:560px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-hdr{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-hdr h3{font-size:16px;font-weight:700}
+.modal-body{padding:18px 22px}
+.modal-ftr{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+/* ── Toast ── */
+#toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:11px 18px;border-radius:var(--r);box-shadow:var(--sh2);font-size:13px;z-index:2000;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none}
+#toast.show{opacity:1;transform:translateY(0)}
+/* ── Dividers ── */
+.section-divider{margin:28px 0;border:none;border-top:1px solid var(--border)}
+/* ── Print ── */
+@media print{
+  #sidebar,.no-print,#overlay,#toast{display:none!important}
+  #main{margin-left:0!important}
+  .section{display:none!important}
+  #print-area{display:block!important}
+  body{background:#fff;font-size:11pt}
+  .print-page{page-break-after:always;padding:0 0 20px}
+  .print-page:last-child{page-break-after:avoid}
+  .ph{border-bottom:2px solid #1e3a5f;padding-bottom:10px;margin-bottom:16px}
+  .ph-title{font-size:18pt;font-weight:700;color:#1e3a5f}
+  .ph-meta{font-size:9pt;color:#666;margin-top:3px}
+  .ptbl{width:100%;border-collapse:collapse;font-size:9pt}
+  .ptbl th{background:#1e3a5f;color:#fff;padding:7px 8px;text-align:left;font-weight:600}
+  .ptbl td{padding:5px 8px;border-bottom:1px solid #ddd;vertical-align:top}
+  .ptbl tr:nth-child(even) td{background:#f8f8f8}
+}
+#print-area{display:none}
+</style>
+</head>
+<body>
+<div id="app">
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sb-brand">
+    <h1>IGT Dashboard</h1>
+    <p id="sb-dept">Integration &amp; Ground Test</p>
+  </div>
+  <div class="sb-nav">
+    <div class="nav-item active" data-sec="overview"><i class="fa-solid fa-gauge-high"></i> Overview</div>
+    <div class="nav-item" data-sec="org"><i class="fa-solid fa-sitemap"></i> Organization &amp; RAA</div>
+    <div class="nav-item" data-sec="staffing"><i class="fa-solid fa-table-list"></i> Staffing Plan</div>
+    <div class="nav-item" data-sec="team"><i class="fa-solid fa-users"></i> Team Members</div>
+    <div class="nav-item" data-sec="goals"><i class="fa-solid fa-bullseye"></i> Goals &amp; Performance</div>
+    <div class="nav-item" data-sec="reports"><i class="fa-solid fa-file-lines"></i> Reports</div>
+  </div>
+  <div class="sb-footer" id="sb-saved">Last saved: —</div>
+</nav>
+<!-- MAIN -->
+<main id="main">
+  <!-- OVERVIEW -->
+  <section id="s-overview" class="section active">
+    <div class="sec-hdr">
+      <div class="sec-hdr-left"><h2>Overview</h2><p>Integration &amp; Ground Test Department</p></div>
+      <div class="no-print" style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="printReport('all')"><i class="fa-solid fa-print"></i> Print Summary</button>
+      </div>
+    </div>
+    <div class="summary-row" id="summary-cards"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="card"><div class="card-body">
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:14px;color:var(--navy)"><i class="fa-solid fa-sitemap" style="margin-right:6px;opacity:.6"></i>Org Structure</h3>
+        <div id="mini-org"></div>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:14px;color:var(--navy)"><i class="fa-solid fa-list-check" style="margin-right:6px;opacity:.6"></i>Recent Goals</h3>
+        <div id="mini-goals"></div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ORG & RAA -->
+  <section id="s-org" class="section">
+    <div class="sec-hdr">
+      <div class="sec-hdr-left"><h2>Organization &amp; RAA</h2><p>Responsibility, Authority &amp; Accountability by position</p></div>
+      <button class="btn btn-amber no-print btn-sm" onclick="printReport('raa')"><i class="fa-solid fa-print"></i> Print RAA Matrix</button>
+    </div>
+    <div class="card card-body" style="margin-bottom:24px">
+      <h3 style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:16px;text-transform:uppercase;letter-spacing:.5px">Department Hierarchy</h3>
+      <div class="org-wrap"><div id="org-chart"></div></div>
+    </div>
+    <div class="pos-list" id="pos-list"></div>
+  </section>
+
+  <!-- STAFFING -->
+  <section id="s-staffing" class="section">
+    <div class="sec-hdr">
+      <div class="sec-hdr-left"><h2>Staffing Plan</h2><p>Authorized positions, skill distribution, and gap analysis</p></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm no-print" onclick="openModal('staffing')"><i class="fa-solid fa-plus"></i> Add Row</button>
+        <button class="btn btn-outline btn-sm no-print" onclick="printReport('staffing')"><i class="fa-solid fa-print"></i> Print</button>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-body" style="padding-bottom:8px">
+        <div style="display:flex;gap:16px;flex-wrap:wrap" id="staffing-summary"></div>
+      </div>
+    </div>
+    <div class="card"><div class="tbl-wrap"><table class="dtbl" id="staffing-tbl">
+      <thead><tr>
+        <th>Role / Position</th><th>Reporting To</th><th>Authorized</th><th>Current</th><th>Gap</th><th>Priority</th><th>Target Fill Date</th><th class="no-print">Actions</th>
+      </tr></thead>
+      <tbody id="staffing-body"></tbody>
+    </table></div></div>
+  </section>
+
+  <!-- TEAM MEMBERS -->
+  <section id="s-team" class="section">
+    <div class="sec-hdr">
+      <div class="sec-hdr-left"><h2>Team Members</h2><p>Individual profiles, skills, and contact information</p></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm no-print" onclick="openModal('member')"><i class="fa-solid fa-user-plus"></i> Add Member</button>
+        <button class="btn btn-outline btn-sm no-print" onclick="printReport('roster')"><i class="fa-solid fa-print"></i> Print Roster</button>
+      </div>
+    </div>
+    <div class="members-filters no-print">
+      <label style="font-size:12px;color:var(--muted);font-weight:600">Filter by manager:</label>
+      <select class="form-ctrl" style="width:auto" id="member-filter" onchange="renderMembers()">
+        <option value="">All</option>
+      </select>
+    </div>
+    <div id="members-grid" class="members-grid"></div>
+  </section>
+
+  <!-- GOALS -->
+  <section id="s-goals" class="section">
+    <div class="sec-hdr">
+      <div class="sec-hdr-left"><h2>Goals &amp; Performance</h2><p>Individual goals, progress tracking, and performance notes</p></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm no-print" onclick="openModal('goal')"><i class="fa-solid fa-plus"></i> Add Goal</button>
+        <button class="btn btn-outline btn-sm no-print" onclick="printReport('goals')"><i class="fa-solid fa-print"></i> Print Goal Sheets</button>
+      </div>
+    </div>
+    <div class="goals-filters no-print">
+      <label style="font-size:12px;color:var(--muted);font-weight:600">Filter by person:</label>
+      <select class="form-ctrl" style="width:auto" id="goal-filter" onchange="renderGoals()">
+        <option value="">All</option>
+      </select>
+      <label style="font-size:12px;color:var(--muted);font-weight:600;margin-left:8px">Status:</label>
+      <select class="form-ctrl" style="width:auto" id="goal-status-filter" onchange="renderGoals()">
+        <option value="">All</option>
+        <option>In Progress</option><option>On Track</option><option>At Risk</option>
+        <option>Completed</option><option>Not Started</option>
+      </select>
+    </div>
+    <div id="goals-list" class="goals-list"></div>
+  </section>
+
+  <!-- REPORTS -->
+  <section id="s-reports" class="section">
+    <div class="sec-hdr">
+      <div class="sec-hdr-left"><h2>Reports</h2><p>Printable documents to distribute to your team</p></div>
+    </div>
+    <div class="reports-grid">
+      <div class="rep-card" onclick="printReport('raa')">
+        <div class="rep-ico"><i class="fa-solid fa-file-contract"></i></div>
+        <div class="rep-title">RAA Position Matrix</div>
+        <div class="rep-desc">Full Responsibility, Authority &amp; Accountability matrix for all positions — suitable for distributing to your team.</div>
+      </div>
+      <div class="rep-card" onclick="printReport('staffing')">
+        <div class="rep-ico"><i class="fa-solid fa-chart-bar"></i></div>
+        <div class="rep-title">Staffing Summary</div>
+        <div class="rep-desc">Authorized positions, current fill, gap analysis, and skill distribution by reporting manager.</div>
+      </div>
+      <div class="rep-card" onclick="printReport('roster')">
+        <div class="rep-ico"><i class="fa-solid fa-address-card"></i></div>
+        <div class="rep-title">Team Roster</div>
+        <div class="rep-desc">Full team roster with name, role, manager, start date, status, and contact information.</div>
+      </div>
+      <div class="rep-card" onclick="printReport('goals')">
+        <div class="rep-ico"><i class="fa-solid fa-bullseye"></i></div>
+        <div class="rep-title">Individual Goal Sheets</div>
+        <div class="rep-desc">One page per team member showing all active goals, progress, and performance notes.</div>
+      </div>
+      <div class="rep-card" onclick="printReport('org')">
+        <div class="rep-ico"><i class="fa-solid fa-sitemap"></i></div>
+        <div class="rep-title">Org Chart</div>
+        <div class="rep-desc">Department hierarchy with headcount by team — suitable for inclusion in briefing packages.</div>
+      </div>
+    </div>
+  </section>
+</main>
+</div><!-- end #app -->
+
+<!-- MODAL OVERLAY -->
+<div id="overlay">
+  <div class="modal" id="modal-box">
+    <div class="modal-hdr">
+      <h3 id="modal-title">Add</h3>
+      <button class="btn-icon" onclick="closeModal()"><i class="fa-solid fa-xmark fa-lg"></i></button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-ftr">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-save" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- PRINT AREA -->
+<div id="print-area"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DEFAULT DATA
+// ═══════════════════════════════════════════════════════════
+const DEFAULT_DATA = {
+  meta: { departmentName: "Integration and Ground Test", lastUpdated: "" },
+  positions: [
+    { id:"dir", title:"Engineering and Operations Director", shift:"", level:0, reports_to:null,
+      raa:{ responsibilities:["Set strategic direction for engineering and operations division","Approve division-level budgets and resource allocation","Represent division to executive leadership and external stakeholders","Establish division-wide policies, standards, and technical excellence criteria"], authorities:["Approve organizational restructuring within division","Approve capital expenditures and program resource changes","Final authority on senior personnel decisions","Approve division performance goals and metrics"], accountabilities:["Division performance against program milestones and budgets","Talent pipeline development across division","Safety, quality, and technical excellence standards","Division-level risk identification and mitigation"] }
+    },
+    { id:"sm-igt", title:"Senior Manager, Integration and Ground Test", shift:"", level:1, reports_to:"dir",
+      raa:{ responsibilities:["Manage all Integration and Ground Test department operations","Develop and execute department staffing plans and workforce strategy","Ensure technical quality and schedule performance across IGT","Foster team development, collaboration, and a safety-first culture","Communicate department status, risks, and needs to Director","Clarify and maintain RAA for all positions within the department"], authorities:["Approve department expenditures within authorized limits","Make hiring recommendations and performance assessments","Assign work priorities and task assignments within IGT","Approve procedures, plans, and technical products at department level","Resolve escalated issues between Integration and Ground Test teams"], accountabilities:["Department schedule and budget performance","Team member development and career growth","Cross-functional integration of Integration and Ground Test activities","Risk management and mitigation within department scope","Accuracy and completeness of staffing plans and workforce plans"] }
+    },
+    { id:"mgr-int", title:"Integration Manager", shift:"", level:2, reports_to:"sm-igt",
+      raa:{ responsibilities:["Lead and coordinate all integration activities across assigned programs","Manage integration team daily operations and work assignments","Develop and maintain integration schedules, procedures, and work instructions","Interface with design, systems engineering, and software teams to ensure integration readiness","Report integration status, risks, and metrics to Senior Manager","Manage a team of 3 Systems Engineers, 3 Software Engineers, and 4 Air Vehicle Engineers"], authorities:["Direct integration team daily task assignments","Approve integration procedures and work instructions","Accept or reject integration work package completions","Approve overtime within budget authority","Stop integration activities for quality or safety concerns"], accountabilities:["Integration milestone execution and schedule adherence","Integration procedure compliance and build quality","Integration team member performance and development","Configuration control and traceability during integration activities"] }
+    },
+    { id:"mgr-gt-day", title:"Ground Test Manager (Day Shift)", shift:"Day", level:2, reports_to:"sm-igt",
+      raa:{ responsibilities:["Lead day-shift ground test operations and team management","Develop and drive primary test planning, procedures, and success criteria","Manage complex test execution including readiness reviews and test initiation","Ensure facility safety compliance and day-shift facility readiness","Report test status, anomalies, and results to Senior Manager","Lead anomaly investigation and disposition for day-shift events","Manage a team of 2 Senior Test Engineers, 3 Test Engineers, 2 Test Technicians, 1 Data Systems Engineer, 1 Safety/Quality Engineer, and 1 Facility Engineer"], authorities:["Direct day-shift ground test team operations and assignments","Approve test readiness and authorize test initiation","Halt testing at any time for safety or quality concerns","Approve test procedures, test reports, and data packages","Approve overtime for day-shift personnel"], accountabilities:["Day-shift test execution schedule and milestone performance","Test facility safety compliance and day-shift readiness","Test data integrity, anomaly reporting accuracy, and test report quality","Day-shift team member performance, training, and development"] }
+    },
+    { id:"mgr-gt-night", title:"Ground Test Manager (Night Shift)", shift:"Night", level:2, reports_to:"sm-igt",
+      raa:{ responsibilities:["Lead night-shift ground test operations following day-shift established procedures","Execute assigned test activities and monitor ongoing test campaigns","Ensure facility safety monitoring and night-shift operational readiness","Manage shift handover, including status reports and anomaly logs","Escalate unplanned anomalies or out-of-family conditions to Senior Manager","Manage a team of 1 Senior Test Engineer, 3 Test Engineers, 3 Test Technicians, 1 Data Systems Engineer, 1 Safety Technician, and 1 Facility Technician"], authorities:["Direct night-shift team operations and task assignments","Authorize continuation of pre-approved test sequences","Halt testing for safety or quality concerns","Approve shift data packages and handover reports"], accountabilities:["Night-shift test execution per approved procedures and schedules","Accurate and timely shift handover documentation","Night-shift facility safety monitoring and incident reporting","Night-shift team member performance and development"] }
+    }
+  ],
+  members: [],
+  staffing: [
+    { id:"st-01", roleTitle:"Integration Manager", reportingTo:"sm-igt", authorized:1, current:0, priority:"Critical", targetDate:"", notes:"Direct report to Senior Manager" },
+    { id:"st-02", roleTitle:"Systems Engineer", reportingTo:"mgr-int", authorized:3, current:0, priority:"High", targetDate:"", notes:"Requirements mgmt, verification & validation, interface control" },
+    { id:"st-03", roleTitle:"Software Engineer", reportingTo:"mgr-int", authorized:3, current:0, priority:"High", targetDate:"", notes:"Flight/ground software, CONOPS, avionics integration" },
+    { id:"st-04", roleTitle:"Air Vehicle Engineer", reportingTo:"mgr-int", authorized:4, current:0, priority:"High", targetDate:"", notes:"Structures, propulsion, aerodynamics, flight mechanics" },
+    { id:"st-05", roleTitle:"Ground Test Manager (Day Shift)", reportingTo:"sm-igt", authorized:1, current:0, priority:"Critical", targetDate:"", notes:"Direct report to Senior Manager" },
+    { id:"st-06", roleTitle:"Senior Test Engineer", reportingTo:"mgr-gt-day", authorized:2, current:0, priority:"Critical", targetDate:"", notes:"Test planning, anomaly investigation, technical authority, TRR lead" },
+    { id:"st-07", roleTitle:"Test Engineer", reportingTo:"mgr-gt-day", authorized:3, current:0, priority:"High", targetDate:"", notes:"Test execution, data analysis, procedure development" },
+    { id:"st-08", roleTitle:"Test Technician", reportingTo:"mgr-gt-day", authorized:2, current:0, priority:"Medium", targetDate:"", notes:"Vehicle prep, hardware ops, mechanical checkout, GSE" },
+    { id:"st-09", roleTitle:"Data Systems Engineer", reportingTo:"mgr-gt-day", authorized:1, current:0, priority:"High", targetDate:"", notes:"DAQ systems, telemetry processing, IRIG standards, data mgmt" },
+    { id:"st-10", roleTitle:"Safety/Quality Engineer", reportingTo:"mgr-gt-day", authorized:1, current:0, priority:"Critical", targetDate:"", notes:"Range safety, hazardous operations, QA, FOD prevention" },
+    { id:"st-11", roleTitle:"Facility/Mechanical Engineer", reportingTo:"mgr-gt-day", authorized:1, current:0, priority:"Medium", targetDate:"", notes:"GSE maintenance, propellant handling, environmental systems" },
+    { id:"st-12", roleTitle:"Ground Test Manager (Night Shift)", reportingTo:"sm-igt", authorized:1, current:0, priority:"Critical", targetDate:"", notes:"Direct report to Senior Manager" },
+    { id:"st-13", roleTitle:"Senior Test Engineer", reportingTo:"mgr-gt-night", authorized:1, current:0, priority:"High", targetDate:"", notes:"Night-shift oversight; fewer senior engineers needed vs. day shift" },
+    { id:"st-14", roleTitle:"Test Engineer", reportingTo:"mgr-gt-night", authorized:3, current:0, priority:"High", targetDate:"", notes:"Test execution and monitoring of approved sequences" },
+    { id:"st-15", roleTitle:"Test Technician", reportingTo:"mgr-gt-night", authorized:3, current:0, priority:"Medium", targetDate:"", notes:"More technicians vs. day: routine night ops follow established procedures" },
+    { id:"st-16", roleTitle:"Data Systems Engineer", reportingTo:"mgr-gt-night", authorized:1, current:0, priority:"High", targetDate:"", notes:"Data monitoring, recording, shift data packages" },
+    { id:"st-17", roleTitle:"Safety Technician", reportingTo:"mgr-gt-night", authorized:1, current:0, priority:"High", targetDate:"", notes:"Safety monitoring (technician level sufficient for night operations)" },
+    { id:"st-18", roleTitle:"Facility Technician", reportingTo:"mgr-gt-night", authorized:1, current:0, priority:"Medium", targetDate:"", notes:"Facility monitoring, GSE operations, emergency systems" }
+  ],
+  goals: []
+};
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let D = {};
+let modalMode = null, editId = null;
+
+// ═══════════════════════════════════════════════════════════
+// PERSISTENCE
+// ═══════════════════════════════════════════════════════════
+function loadData() {
+  const raw = localStorage.getItem('igt-dashboard');
+  D = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+function saveData() {
+  D.meta.lastUpdated = new Date().toISOString();
+  localStorage.setItem('igt-dashboard', JSON.stringify(D));
+  const el = document.getElementById('sb-saved');
+  if (el) el.textContent = 'Saved ' + new Date().toLocaleTimeString();
+}
+function resetData() {
+  if (!confirm('Reset all data to defaults? This cannot be undone.')) return;
+  localStorage.removeItem('igt-dashboard');
+  loadData(); renderAll(); toast('Data reset to defaults');
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+function posTitle(id) { const p = D.positions.find(x=>x.id===id); return p ? p.title : id; }
+function memberName(id) { const m = D.members.find(x=>x.id===id); return m ? m.name : '—'; }
+function badge(status) {
+  const map = { 'Active':'b-green','Open':'b-blue','On Leave':'b-amber','Departing':'b-red','TBD':'b-gray',
+    'On Track':'b-green','In Progress':'b-blue','At Risk':'b-red','Completed':'b-green','Not Started':'b-gray' };
+  return `<span class="badge ${map[status]||'b-gray'}">${status}</span>`;
+}
+function avatarColor(name) {
+  const colors = ['#2d7dd2','#1e3a5f','#27ae60','#e67e22','#8e44ad','#16a085','#c0392b','#2980b9'];
+  let h = 0; for (let c of name) h = (h*31 + c.charCodeAt(0)) & 0xffff;
+  return colors[h % colors.length];
+}
+function initials(name) { return name.split(' ').filter(Boolean).map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?'; }
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function nav(sec) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.sec===sec));
+  document.querySelectorAll('.section').forEach(el => el.classList.toggle('active', el.id==='s-'+sec));
+  if (sec==='overview') renderOverview();
+  if (sec==='org') renderOrg();
+  if (sec==='staffing') renderStaffing();
+  if (sec==='team') renderMembers();
+  if (sec==='goals') renderGoals();
+}
+
+// ═══════════════════════════════════════════════════════════
+// OVERVIEW
+// ═══════════════════════════════════════════════════════════
+function renderOverview() {
+  const totalAuth = D.staffing.reduce((s,r)=>s+r.authorized,0);
+  const totalCur  = D.staffing.reduce((s,r)=>s+r.current,0);
+  const openPos   = D.staffing.filter(r=>r.current<r.authorized).length;
+  const onTrack   = D.goals.filter(g=>g.status==='On Track'||g.status==='Completed').length;
+  const atRisk    = D.goals.filter(g=>g.status==='At Risk').length;
+  document.getElementById('summary-cards').innerHTML = `
+    <div class="sc blue" onclick="nav('team')"><span class="sc-ico"><i class="fa-solid fa-users"></i></span><div class="sc-val">${totalCur}</div><div class="sc-lbl">Current Headcount</div></div>
+    <div class="sc amber" onclick="nav('staffing')"><span class="sc-ico"><i class="fa-solid fa-circle-plus"></i></span><div class="sc-val">${totalAuth-totalCur}</div><div class="sc-lbl">Authorized Gap</div></div>
+    <div class="sc green" onclick="nav('goals')"><span class="sc-ico"><i class="fa-solid fa-circle-check"></i></span><div class="sc-val">${onTrack}</div><div class="sc-lbl">Goals On Track</div></div>
+    <div class="sc red" onclick="nav('goals')"><span class="sc-ico"><i class="fa-solid fa-triangle-exclamation"></i></span><div class="sc-val">${atRisk}</div><div class="sc-lbl">Goals At Risk</div></div>`;
+  // Mini org
+  const mgrs = D.positions.filter(p=>p.level===2);
+  document.getElementById('mini-org').innerHTML = `<div style="font-size:12px">` +
+    D.positions.filter(p=>p.level<=1).map(p=>`<div style="padding:4px 0;border-bottom:1px solid var(--border)">${'&nbsp;'.repeat(p.level*4)}<strong>${p.title}</strong></div>`).join('') +
+    mgrs.map(p=>{
+      const rows = D.staffing.filter(s=>s.reportingTo===p.id);
+      const auth = rows.reduce((s,r)=>s+r.authorized,0);
+      const cur  = rows.reduce((s,r)=>s+r.current,0);
+      return `<div style="padding:4px 0;border-bottom:1px solid var(--border)">&nbsp;&nbsp;&nbsp;&nbsp;<strong>${p.title}</strong> <span style="color:var(--muted)">${cur}/${auth} filled</span></div>`;
+    }).join('') + `</div>`;
+  // Mini goals
+  const recent = [...D.goals].slice(-5).reverse();
+  document.getElementById('mini-goals').innerHTML = recent.length ? recent.map(g=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="flex:1">${g.title}</span>${badge(g.status)}
+    </div>`).join('') : '<p style="color:var(--muted);font-size:13px">No goals yet. Add goals in the Goals section.</p>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// ORG CHART + RAA
+// ═══════════════════════════════════════════════════════════
+function renderOrg() {
+  renderOrgChart();
+  renderPositions();
+}
+function renderOrgChart() {
+  const levels = [
+    D.positions.filter(p=>p.level===0),
+    D.positions.filter(p=>p.level===1),
+    D.positions.filter(p=>p.level===2)
+  ];
+  const nodeColors = { 0:'l0', 1:'l1', 2:'l2' };
+  let html = '<div style="display:flex;flex-direction:column;align-items:center;gap:0">';
+  // Level 0
+  html += `<div class="org-row">${levels[0].map(p=>`<div class="org-node ${nodeColors[0]}"><div class="org-node-title">${p.title}</div></div>`).join('')}</div>`;
+  html += `<div style="width:2px;height:20px;background:var(--border);margin:0 auto"></div>`;
+  // Level 1
+  html += `<div class="org-row">${levels[1].map(p=>`<div class="org-node ${nodeColors[1]}"><div class="org-node-title">${p.title}</div></div>`).join('')}</div>`;
+  // Branch lines to level 2
+  const l2 = levels[2];
+  if (l2.length) {
+    html += `<div style="width:2px;height:20px;background:var(--border);margin:0 auto"></div>`;
+    // Horizontal line spanning all l2 nodes
+    html += `<div style="display:flex;justify-content:center"><div style="display:flex;align-items:flex-start;gap:${l2.length>2?'80px':'120px'}">`;
+    html += l2.map((p,i)=>{
+      const rows = D.staffing.filter(s=>s.reportingTo===p.id);
+      const auth = rows.reduce((s,r)=>s+r.authorized,0);
+      const cur  = rows.reduce((s,r)=>s+r.current,0);
+      const shiftLabel = p.shift ? `<div class="org-node-sub">${p.shift} Shift</div>` : '';
+      return `<div style="display:flex;flex-direction:column;align-items:center">
+        <div class="org-node l2"><div class="org-node-title">${p.title}</div>${shiftLabel}<div class="org-node-sub">${cur}/${auth} filled</div></div>
+        <div style="width:2px;height:16px;background:var(--border)"></div>
+        <div class="org-node l3"><div class="org-node-title">${auth} authorized positions</div></div>
+      </div>`;
+    }).join('');
+    html += `</div></div>`;
+  }
+  html += '</div>';
+  document.getElementById('org-chart').innerHTML = html;
+}
+function renderPositions() {
+  const container = document.getElementById('pos-list');
+  const colors = { 0:'#1e3a5f',1:'#2d7dd2',2:'#5b9fd8' };
+  container.innerHTML = D.positions.map(pos=>`
+    <div class="pos-card" id="pc-${pos.id}">
+      <div class="pos-card-hdr" onclick="togglePos('${pos.id}')">
+        <span class="pos-badge" style="background:${colors[pos.level]||'#aaa'}"></span>
+        <h3>${pos.title}${pos.shift?` <span style="font-size:11px;color:var(--muted);font-weight:400">(${pos.shift} Shift)</span>`:''}</h3>
+        <span style="font-size:11px;color:var(--muted);margin-right:8px">Level ${pos.level}${pos.reports_to?' · Reports to '+posTitle(pos.reports_to):''}</span>
+        <i class="fa-solid fa-chevron-down chevron"></i>
+      </div>
+      <div class="pos-body">
+        <div class="raa-grid">
+          ${['responsibilities','authorities','accountabilities'].map((key,ki)=>{
+            const labels=['Responsibilities','Authority','Accountability'];
+            const hdrs=['rh','ah','ac'];
+            const items = pos.raa[key]||[];
+            return `<div class="raa-col">
+              <div class="raa-col-hdr ${hdrs[ki]}">${labels[ki]}</div>
+              <div class="raa-items" id="raa-${pos.id}-${key}">
+                ${items.map((txt,ti)=>`
+                  <div class="raa-item" id="ri-${pos.id}-${key}-${ti}">
+                    <span class="raa-dot"></span>
+                    <span class="raa-item-text">${txt}</span>
+                    <span class="raa-item-acts">
+                      <button class="btn-icon" title="Edit" onclick="editRaaItem('${pos.id}','${key}',${ti})"><i class="fa-solid fa-pen fa-xs"></i></button>
+                      <button class="btn-icon" title="Delete" onclick="deleteRaaItem('${pos.id}','${key}',${ti})"><i class="fa-solid fa-trash fa-xs"></i></button>
+                    </span>
+                  </div>`).join('')}
+                <div class="raa-add-btn" onclick="addRaaItem('${pos.id}','${key}')"><i class="fa-solid fa-plus fa-xs"></i> Add item</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+}
+function togglePos(id) {
+  document.getElementById('pc-'+id).classList.toggle('open');
+}
+function editRaaItem(posId, key, idx) {
+  const pos = D.positions.find(p=>p.id===posId);
+  const val = pos.raa[key][idx];
+  const itemEl = document.getElementById(`ri-${posId}-${key}-${idx}`);
+  itemEl.innerHTML = `<div class="raa-edit-row" style="width:100%;padding:0">
+    <textarea id="rea-txt">${val}</textarea>
+    <div style="display:flex;gap:6px;margin-top:4px">
+      <button class="btn btn-primary btn-sm" onclick="saveRaaItem('${posId}','${key}',${idx})">Save</button>
+      <button class="btn btn-outline btn-sm" onclick="renderPositions()">Cancel</button>
+    </div>
+  </div>`;
+}
+function saveRaaItem(posId, key, idx) {
+  const val = document.getElementById('rea-txt').value.trim();
+  if (!val) return;
+  D.positions.find(p=>p.id===posId).raa[key][idx] = val;
+  saveData(); renderPositions(); toast('Item saved');
+}
+function deleteRaaItem(posId, key, idx) {
+  if (!confirm('Delete this item?')) return;
+  D.positions.find(p=>p.id===posId).raa[key].splice(idx,1);
+  saveData(); renderPositions(); toast('Item deleted');
+}
+function addRaaItem(posId, key) {
+  const container = document.getElementById(`raa-${posId}-${key}`);
+  const addBtn = container.querySelector('.raa-add-btn');
+  const div = document.createElement('div');
+  div.className = 'raa-edit-row';
+  div.innerHTML = `<textarea id="raa-new-txt" placeholder="Enter new item..."></textarea>
+    <div style="display:flex;gap:6px;margin-top:4px">
+      <button class="btn btn-primary btn-sm" onclick="confirmAddRaa('${posId}','${key}')">Add</button>
+      <button class="btn btn-outline btn-sm" onclick="this.closest('.raa-edit-row').remove()">Cancel</button>
+    </div>`;
+  container.insertBefore(div, addBtn);
+  div.querySelector('textarea').focus();
+}
+function confirmAddRaa(posId, key) {
+  const val = document.getElementById('raa-new-txt').value.trim();
+  if (!val) return;
+  D.positions.find(p=>p.id===posId).raa[key].push(val);
+  saveData(); renderPositions(); toast('Item added');
+  document.getElementById('pc-'+posId).classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+// STAFFING
+// ═══════════════════════════════════════════════════════════
+function renderStaffing() {
+  const body = document.getElementById('staffing-body');
+  const totalAuth = D.staffing.reduce((s,r)=>s+r.authorized,0);
+  const totalCur  = D.staffing.reduce((s,r)=>s+r.current,0);
+  const gap = totalAuth - totalCur;
+  document.getElementById('staffing-summary').innerHTML = `
+    <div style="font-size:13px"><strong>${totalAuth}</strong> <span style="color:var(--muted)">Authorized</span></div>
+    <div style="font-size:13px"><strong>${totalCur}</strong> <span style="color:var(--muted)">On Board</span></div>
+    <div style="font-size:13px"><strong style="color:${gap>0?'var(--red)':gap<0?'var(--amber)':'var(--green)'}">${gap>0?'-'+gap:gap<0?'+'+Math.abs(gap):0}</strong> <span style="color:var(--muted)">Net Gap</span></div>
+    <div style="font-size:13px"><strong>${D.staffing.filter(r=>r.priority==='Critical').length}</strong> <span style="color:var(--muted)">Critical Positions</span></div>`;
+  const priOrder = {Critical:0,High:1,Medium:2,Low:3};
+  const rows = [...D.staffing].sort((a,b)=>(priOrder[a.priority]||9)-(priOrder[b.priority]||9));
+  body.innerHTML = rows.map(r=>{
+    const g = r.authorized - r.current;
+    const gClass = g>0?'gap-neg':g<0?'gap-pos':'gap-zero';
+    const gText = g>0?`-${g}`:g<0?`+${Math.abs(g)}`:'—';
+    const priColor = {Critical:'var(--red)',High:'var(--amber)',Medium:'var(--blue)',Low:'var(--muted)'}[r.priority]||'var(--muted)';
+    return `<tr>
+      <td><strong>${r.roleTitle}</strong>${r.notes?`<br><span style="font-size:11px;color:var(--muted)">${r.notes}</span>`:''}
+      </td>
+      <td style="font-size:12px">${posTitle(r.reportingTo)}</td>
+      <td style="text-align:center">${r.authorized}</td>
+      <td style="text-align:center">${r.current}</td>
+      <td style="text-align:center" class="${gClass}">${gText}</td>
+      <td><span style="color:${priColor};font-weight:600;font-size:12px">${r.priority}</span></td>
+      <td style="font-size:12px">${r.targetDate||'<span style="color:var(--muted)">—</span>'}</td>
+      <td class="no-print" style="white-space:nowrap">
+        <button class="btn-icon" title="Edit" onclick="openModal('staffing','${r.id}')"><i class="fa-solid fa-pen fa-sm"></i></button>
+        <button class="btn-icon" title="Delete" onclick="deleteStaffing('${r.id}')"><i class="fa-solid fa-trash fa-sm"></i></button>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No staffing entries yet.</td></tr>`;
+}
+function deleteStaffing(id) {
+  if (!confirm('Delete this staffing row?')) return;
+  D.staffing = D.staffing.filter(r=>r.id!==id);
+  saveData(); renderStaffing(); toast('Row deleted');
+}
+
+// ═══════════════════════════════════════════════════════════
+// TEAM MEMBERS
+// ═══════════════════════════════════════════════════════════
+function renderMembers() {
+  // Populate filter
+  const sel = document.getElementById('member-filter');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">All</option>' +
+    D.positions.filter(p=>p.level>=1).map(p=>`<option value="${p.id}">${p.title}</option>`).join('');
+  sel.value = prev;
+  const filterPos = sel.value;
+  let members = D.members;
+  if (filterPos) members = members.filter(m=>m.reportingTo===filterPos);
+  const grid = document.getElementById('members-grid');
+  if (!members.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">
+      <i class="fa-solid fa-users fa-2x" style="margin-bottom:12px;display:block;opacity:.3"></i>
+      No team members yet. Click <strong>Add Member</strong> to get started.
+    </div>`;
+    return;
+  }
+  grid.innerHTML = members.map(m=>{
+    const color = avatarColor(m.name);
+    const mgr = posTitle(m.reportingTo);
+    return `<div class="mc" id="mc-${m.id}">
+      <div class="mc-hdr" onclick="toggleMember('${m.id}')">
+        <div class="mc-avatar" style="background:${color}">${initials(m.name)}</div>
+        <div class="mc-info">
+          <h3>${m.name}</h3>
+          <p>${m.role||'—'} · ${badge(m.status||'Active')}</p>
+        </div>
+        <i class="fa-solid fa-chevron-down mc-arrow"></i>
+      </div>
+      <div class="mc-body">
+        <div class="mc-row"><span class="mc-lbl">Reports to</span><span>${mgr}</span></div>
+        ${m.email?`<div class="mc-row"><span class="mc-lbl">Email</span><span>${m.email}</span></div>`:''}
+        ${m.phone?`<div class="mc-row"><span class="mc-lbl">Phone</span><span>${m.phone}</span></div>`:''}
+        ${m.startDate?`<div class="mc-row"><span class="mc-lbl">Start Date</span><span>${m.startDate}</span></div>`:''}
+        ${m.notes?`<div class="mc-row"><span class="mc-lbl">Notes</span><span>${m.notes}</span></div>`:''}
+        ${m.skills&&m.skills.length?`<div class="skills-wrap">${m.skills.map(s=>`<span class="skill-tag">${s}</span>`).join('')}</div>`:''}
+        <div style="display:flex;gap:6px;margin-top:12px">
+          <button class="btn btn-outline btn-sm no-print" onclick="openModal('member','${m.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+          <button class="btn btn-outline btn-sm no-print" onclick="nav('goals');setTimeout(()=>{document.getElementById('goal-filter').value='${m.id}';renderGoals()},100)"><i class="fa-solid fa-bullseye"></i> Goals</button>
+          <button class="btn-icon no-print" onclick="deleteMember('${m.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleMember(id) { document.getElementById('mc-'+id).classList.toggle('open'); }
+function deleteMember(id) {
+  if (!confirm('Delete this team member?')) return;
+  D.members = D.members.filter(m=>m.id!==id);
+  D.goals = D.goals.filter(g=>g.memberId!==id);
+  saveData(); renderMembers(); toast('Member deleted');
+}
+
+// ═══════════════════════════════════════════════════════════
+// GOALS
+// ═══════════════════════════════════════════════════════════
+function renderGoals() {
+  // Populate person filter
+  const sel = document.getElementById('goal-filter');
+  const prevPerson = sel.value;
+  sel.innerHTML = '<option value="">All</option>' +
+    D.members.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+  sel.value = prevPerson;
+  const filterMember = sel.value;
+  const filterStatus = document.getElementById('goal-status-filter').value;
+  let goals = [...D.goals];
+  if (filterMember) goals = goals.filter(g=>g.memberId===filterMember);
+  if (filterStatus) goals = goals.filter(g=>g.status===filterStatus);
+  const list = document.getElementById('goals-list');
+  if (!goals.length) {
+    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
+      <i class="fa-solid fa-bullseye fa-2x" style="margin-bottom:12px;display:block;opacity:.3"></i>
+      No goals found. Click <strong>Add Goal</strong> to create one.
+    </div>`;
+    return;
+  }
+  list.innerHTML = goals.map(g=>{
+    const pct = Math.min(100, Math.max(0, g.progress||0));
+    const pbClass = g.status==='Completed'?'pb-green':g.status==='At Risk'?'pb-red':g.status==='On Track'?'pb-green':'';
+    return `<div class="gc">
+      <div class="gc-top">
+        <div style="flex:1">
+          <div class="gc-title">${g.title}</div>
+          <div class="gc-who">${memberName(g.memberId)}</div>
+        </div>
+        ${badge(g.status||'Not Started')}
+        <div style="display:flex;gap:4px;margin-left:8px" class="no-print">
+          <button class="btn-icon" onclick="openModal('goal','${g.id}')"><i class="fa-solid fa-pen fa-sm"></i></button>
+          <button class="btn-icon" onclick="deleteGoal('${g.id}')"><i class="fa-solid fa-trash fa-sm"></i></button>
+        </div>
+      </div>
+      ${g.description?`<p style="font-size:12px;color:var(--muted);margin-bottom:4px">${g.description}</p>`:''}
+      <div class="progress-wrap"><div class="progress-bar ${pbClass}" style="width:${pct}%"></div></div>
+      <div class="gc-meta">
+        <span><i class="fa-solid fa-percent fa-xs"></i> ${pct}% complete</span>
+        ${g.metric?`<span><i class="fa-solid fa-ruler fa-xs"></i> ${g.metric}: ${g.target||'—'}</span>`:''}
+        ${g.dueDate?`<span><i class="fa-regular fa-calendar fa-xs"></i> Due ${g.dueDate}</span>`:''}
+        ${g.performanceNotes?`<span style="flex:1;color:var(--text)"><i class="fa-solid fa-note-sticky fa-xs"></i> ${g.performanceNotes}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function deleteGoal(id) {
+  if (!confirm('Delete this goal?')) return;
+  D.goals = D.goals.filter(g=>g.id!==id);
+  saveData(); renderGoals(); toast('Goal deleted');
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════════
+function openModal(type, id) {
+  modalMode = type; editId = id || null;
+  const overlay = document.getElementById('overlay');
+  const title   = document.getElementById('modal-title');
+  const body    = document.getElementById('modal-body');
+  overlay.classList.add('open');
+
+  if (type === 'member') {
+    const m = id ? D.members.find(x=>x.id===id) : {};
+    title.textContent = id ? 'Edit Team Member' : 'Add Team Member';
+    const posOpts = D.positions.filter(p=>p.level>=1).map(p=>`<option value="${p.id}" ${m.reportingTo===p.id?'selected':''}>${p.title}</option>`).join('');
+    const statusOpts = ['Active','Open','On Leave','Departing','TBD'].map(s=>`<option ${m.status===s?'selected':''}>${s}</option>`).join('');
+    body.innerHTML = `
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-ctrl" id="f-name" value="${m.name||''}"></div>
+        <div class="form-group"><label class="form-label">Role / Title</label><input class="form-ctrl" id="f-role" value="${m.role||''}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Reports To</label><select class="form-ctrl" id="f-reportingTo">${posOpts}</select></div>
+        <div class="form-group"><label class="form-label">Status</label><select class="form-ctrl" id="f-status">${statusOpts}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Email</label><input class="form-ctrl" id="f-email" type="email" value="${m.email||''}"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input class="form-ctrl" id="f-phone" value="${m.phone||''}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Start Date</label><input class="form-ctrl" id="f-startDate" type="date" value="${m.startDate||''}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Skills (comma-separated)</label><input class="form-ctrl" id="f-skills" value="${(m.skills||[]).join(', ')}"></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-ctrl" id="f-notes" rows="2">${m.notes||''}</textarea></div>`;
+  } else if (type === 'goal') {
+    const g = id ? D.goals.find(x=>x.id===id) : {};
+    title.textContent = id ? 'Edit Goal' : 'Add Goal';
+    const memberOpts = D.members.map(m=>`<option value="${m.id}" ${g.memberId===m.id?'selected':''}>${m.name}</option>`).join('');
+    const statusOpts = ['Not Started','In Progress','On Track','At Risk','Completed'].map(s=>`<option ${g.status===s?'selected':''}>${s}</option>`).join('');
+    body.innerHTML = `
+      <div class="form-group"><label class="form-label">Team Member *</label><select class="form-ctrl" id="f-memberId"><option value="">— Select —</option>${memberOpts}</select></div>
+      <div class="form-group"><label class="form-label">Goal Title *</label><input class="form-ctrl" id="f-title" value="${g.title||''}"></div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-ctrl" id="f-description" rows="2">${g.description||''}</textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Metric</label><input class="form-ctrl" id="f-metric" value="${g.metric||''}" placeholder="e.g. Test events complete"></div>
+        <div class="form-group"><label class="form-label">Target</label><input class="form-ctrl" id="f-target" value="${g.target||''}" placeholder="e.g. 12 by Q3"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Due Date</label><input class="form-ctrl" id="f-dueDate" type="date" value="${g.dueDate||''}"></div>
+        <div class="form-group"><label class="form-label">Status</label><select class="form-ctrl" id="f-status">${statusOpts}</select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Progress (0–100%)</label><input class="form-ctrl" id="f-progress" type="number" min="0" max="100" value="${g.progress||0}"></div>
+      <div class="form-group"><label class="form-label">Performance Notes</label><textarea class="form-ctrl" id="f-performanceNotes" rows="2">${g.performanceNotes||''}</textarea></div>`;
+  } else if (type === 'staffing') {
+    const r = id ? D.staffing.find(x=>x.id===id) : {};
+    title.textContent = id ? 'Edit Staffing Row' : 'Add Staffing Row';
+    const posOpts = D.positions.filter(p=>p.level>=1).map(p=>`<option value="${p.id}" ${r.reportingTo===p.id?'selected':''}>${p.title}</option>`).join('');
+    const priOpts = ['Critical','High','Medium','Low'].map(s=>`<option ${r.priority===s?'selected':''}>${s}</option>`).join('');
+    body.innerHTML = `
+      <div class="form-group"><label class="form-label">Role / Position Title *</label><input class="form-ctrl" id="f-roleTitle" value="${r.roleTitle||''}"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Reporting To</label><select class="form-ctrl" id="f-reportingTo">${posOpts}</select></div>
+        <div class="form-group"><label class="form-label">Priority</label><select class="form-ctrl" id="f-priority">${priOpts}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Authorized Count</label><input class="form-ctrl" id="f-authorized" type="number" min="0" value="${r.authorized||1}"></div>
+        <div class="form-group"><label class="form-label">Current On Board</label><input class="form-ctrl" id="f-current" type="number" min="0" value="${r.current||0}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Target Fill Date</label><input class="form-ctrl" id="f-targetDate" type="date" value="${r.targetDate||''}"></div>
+      <div class="form-group"><label class="form-label">Notes / Skill Requirements</label><textarea class="form-ctrl" id="f-notes" rows="2">${r.notes||''}</textarea></div>`;
+  }
+}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function saveModal() {
+  if (modalMode === 'member') {
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { alert('Name is required'); return; }
+    const obj = { id: editId||uid(), name, role: document.getElementById('f-role').value.trim(),
+      reportingTo: document.getElementById('f-reportingTo').value,
+      status: document.getElementById('f-status').value,
+      email: document.getElementById('f-email').value.trim(),
+      phone: document.getElementById('f-phone').value.trim(),
+      startDate: document.getElementById('f-startDate').value,
+      skills: document.getElementById('f-skills').value.split(',').map(s=>s.trim()).filter(Boolean),
+      notes: document.getElementById('f-notes').value.trim() };
+    if (editId) { const i = D.members.findIndex(m=>m.id===editId); D.members[i]=obj; }
+    else D.members.push(obj);
+    saveData(); closeModal(); renderMembers(); toast(editId?'Member updated':'Member added');
+  } else if (modalMode === 'goal') {
+    const memberId = document.getElementById('f-memberId').value;
+    const title    = document.getElementById('f-title').value.trim();
+    if (!title || !memberId) { alert('Member and title are required'); return; }
+    const obj = { id: editId||uid(), memberId, title,
+      description: document.getElementById('f-description').value.trim(),
+      metric: document.getElementById('f-metric').value.trim(),
+      target: document.getElementById('f-target').value.trim(),
+      dueDate: document.getElementById('f-dueDate').value,
+      status: document.getElementById('f-status').value,
+      progress: parseInt(document.getElementById('f-progress').value)||0,
+      performanceNotes: document.getElementById('f-performanceNotes').value.trim() };
+    if (editId) { const i = D.goals.findIndex(g=>g.id===editId); D.goals[i]=obj; }
+    else D.goals.push(obj);
+    saveData(); closeModal(); renderGoals(); toast(editId?'Goal updated':'Goal added');
+  } else if (modalMode === 'staffing') {
+    const roleTitle = document.getElementById('f-roleTitle').value.trim();
+    if (!roleTitle) { alert('Role title is required'); return; }
+    const obj = { id: editId||uid(), roleTitle,
+      reportingTo: document.getElementById('f-reportingTo').value,
+      authorized: parseInt(document.getElementById('f-authorized').value)||1,
+      current: parseInt(document.getElementById('f-current').value)||0,
+      priority: document.getElementById('f-priority').value,
+      targetDate: document.getElementById('f-targetDate').value,
+      notes: document.getElementById('f-notes').value.trim() };
+    if (editId) { const i = D.staffing.findIndex(r=>r.id===editId); D.staffing[i]=obj; }
+    else D.staffing.push(obj);
+    saveData(); closeModal(); renderStaffing(); toast(editId?'Row updated':'Row added');
+  }
+}
+// Close on backdrop click
+document.getElementById('overlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+
+// ═══════════════════════════════════════════════════════════
+// PRINT REPORTS
+// ═══════════════════════════════════════════════════════════
+function printReport(type) {
+  const area = document.getElementById('print-area');
+  const dept = D.meta.departmentName;
+  const now  = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  let html = '';
+
+  if (type==='raa' || type==='all') {
+    html += `<div class="print-page">
+      <div class="ph"><div class="ph-title">Responsibility, Authority &amp; Accountability Matrix</div>
+        <div class="ph-meta">${dept} &nbsp;|&nbsp; ${now}</div></div>
+      ${D.positions.map(pos=>`
+        <div style="margin-bottom:20px">
+          <h3 style="font-size:12pt;color:#1e3a5f;margin-bottom:8px;border-left:4px solid #2d7dd2;padding-left:8px">${pos.title}${pos.shift?' ('+pos.shift+' Shift)':''}</h3>
+          <table class="ptbl"><thead><tr><th style="width:33%">Responsibilities</th><th style="width:33%">Authority</th><th style="width:33%">Accountability</th></tr></thead>
+          <tbody><tr>
+            <td>${(pos.raa.responsibilities||[]).map(r=>`• ${r}`).join('<br>')}</td>
+            <td>${(pos.raa.authorities||[]).map(r=>`• ${r}`).join('<br>')}</td>
+            <td>${(pos.raa.accountabilities||[]).map(r=>`• ${r}`).join('<br>')}</td>
+          </tr></tbody></table>
+        </div>`).join('')}
+    </div>`;
+  }
+  if (type==='staffing' || type==='all') {
+    const totalAuth = D.staffing.reduce((s,r)=>s+r.authorized,0);
+    const totalCur  = D.staffing.reduce((s,r)=>s+r.current,0);
+    html += `<div class="print-page">
+      <div class="ph"><div class="ph-title">Staffing Plan Summary</div>
+        <div class="ph-meta">${dept} &nbsp;|&nbsp; ${now} &nbsp;|&nbsp; ${totalCur} of ${totalAuth} positions filled</div></div>
+      <table class="ptbl"><thead><tr><th>Role</th><th>Reporting To</th><th>Auth</th><th>Current</th><th>Gap</th><th>Priority</th><th>Target Fill</th></tr></thead>
+      <tbody>${D.staffing.map(r=>{const g=r.authorized-r.current;return`<tr>
+        <td><strong>${r.roleTitle}</strong>${r.notes?`<br><span style="font-size:8pt;color:#666">${r.notes}</span>`:''}</td>
+        <td>${posTitle(r.reportingTo)}</td>
+        <td style="text-align:center">${r.authorized}</td>
+        <td style="text-align:center">${r.current}</td>
+        <td style="text-align:center;color:${g>0?'#c0392b':g<0?'#27ae60':'#888'}">${g>0?'-'+g:g<0?'+'+Math.abs(g):'—'}</td>
+        <td>${r.priority}</td><td>${r.targetDate||'—'}</td></tr>`;}).join('')}
+      </tbody></table>
+    </div>`;
+  }
+  if (type==='roster' || type==='all') {
+    html += `<div class="print-page">
+      <div class="ph"><div class="ph-title">Team Roster</div>
+        <div class="ph-meta">${dept} &nbsp;|&nbsp; ${now} &nbsp;|&nbsp; ${D.members.length} members</div></div>
+      ${D.members.length ? `<table class="ptbl"><thead><tr><th>Name</th><th>Role</th><th>Reports To</th><th>Start Date</th><th>Status</th><th>Email</th><th>Skills</th></tr></thead>
+      <tbody>${D.members.map(m=>`<tr>
+        <td><strong>${m.name}</strong></td><td>${m.role||'—'}</td>
+        <td>${posTitle(m.reportingTo)}</td>
+        <td>${m.startDate||'—'}</td><td>${m.status||'—'}</td>
+        <td>${m.email||'—'}</td><td style="font-size:8pt">${(m.skills||[]).join(', ')||'—'}</td>
+      </tr>`).join('')}</tbody></table>` : '<p style="color:#888">No team members on record.</p>'}
+    </div>`;
+  }
+  if (type==='goals' || type==='all') {
+    const byMember = {};
+    D.goals.forEach(g=>{ (byMember[g.memberId]=byMember[g.memberId]||[]).push(g); });
+    html += `<div class="print-page">
+      <div class="ph"><div class="ph-title">Individual Goal Sheets</div>
+        <div class="ph-meta">${dept} &nbsp;|&nbsp; ${now}</div></div>
+      ${Object.keys(byMember).map(mid=>{
+        const m = D.members.find(x=>x.id===mid);
+        const goals = byMember[mid];
+        return `<div style="margin-bottom:24px;page-break-inside:avoid">
+          <h3 style="font-size:12pt;color:#1e3a5f;margin-bottom:8px;border-left:4px solid #27ae60;padding-left:8px">${m?m.name:'Unknown'} — ${m?m.role:'—'}</h3>
+          <table class="ptbl"><thead><tr><th>Goal</th><th>Metric / Target</th><th>Due</th><th>Status</th><th>Progress</th><th>Notes</th></tr></thead>
+          <tbody>${goals.map(g=>`<tr>
+            <td><strong>${g.title}</strong>${g.description?`<br><span style="font-size:8pt;color:#666">${g.description}</span>`:''}</td>
+            <td>${g.metric||'—'}${g.target?' / '+g.target:''}</td>
+            <td>${g.dueDate||'—'}</td><td>${g.status||'—'}</td>
+            <td>${g.progress||0}%</td><td style="font-size:8pt">${g.performanceNotes||'—'}</td>
+          </tr>`).join('')}</tbody></table>
+        </div>`;
+      }).join('') || '<p style="color:#888">No goals on record.</p>'}
+    </div>`;
+  }
+  if (type==='org') {
+    html += `<div class="print-page">
+      <div class="ph"><div class="ph-title">Organization Chart</div>
+        <div class="ph-meta">${dept} &nbsp;|&nbsp; ${now}</div></div>
+      <table class="ptbl"><thead><tr><th>Position</th><th>Level</th><th>Reports To</th><th>Shift</th><th>Auth. Headcount</th><th>Current</th></tr></thead>
+      <tbody>${D.positions.map(p=>{
+        const rows = D.staffing.filter(s=>s.reportingTo===p.id);
+        const auth=rows.reduce((s,r)=>s+r.authorized,0);
+        const cur =rows.reduce((s,r)=>s+r.current,0);
+        return `<tr><td>${'—'.repeat(p.level)} ${p.title}</td><td>${p.level}</td><td>${p.reports_to?posTitle(p.reports_to):'—'}</td><td>${p.shift||'—'}</td><td>${auth||'—'}</td><td>${cur||'—'}</td></tr>`;
+      }).join('')}</tbody></table>
+    </div>`;
+  }
+
+  area.innerHTML = html;
+  window.print();
+  setTimeout(()=>{ area.innerHTML=''; }, 1000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+function renderAll() {
+  renderOverview();
+  // Populate filters for members & goals (rendered on demand)
+}
+document.querySelectorAll('.nav-item').forEach(el=>{
+  el.addEventListener('click', ()=> nav(el.dataset.sec));
+});
+// Keyboard: Escape closes modal
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+loadData();
+renderAll();
+
+// Show saved timestamp
+if (D.meta.lastUpdated) {
+  const el = document.getElementById('sb-saved');
+  if (el) el.textContent = 'Last saved: ' + new Date(D.meta.lastUpdated).toLocaleDateString();
+}
+
+// Add reset button to footer
+document.querySelector('.sb-footer').insertAdjacentHTML('beforeend',
+  '<br><span style="cursor:pointer;text-decoration:underline" onclick="resetData()">Reset to defaults</span>');
+</script>
+</body>
+</html>
