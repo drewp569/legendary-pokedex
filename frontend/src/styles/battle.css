@@ -1,0 +1,128 @@
+.battle-page {
+  padding: 40px 0 60px;
+}
+
+.battle-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.battle-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.battle-sub {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Stat comparison */
+.stat-comparison {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.stat-comparison-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.cmp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.cmp-val {
+  font-size: 0.8rem;
+  font-weight: 600;
+  width: 32px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.cmp-val.cmp-winner {
+  color: var(--accent);
+}
+
+.cmp-bars {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cmp-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cmp-bar-left {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cmp-bar-right {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.cmp-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.cmp-bar-1 {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+}
+
+.cmp-bar-2 {
+  background: linear-gradient(90deg, #f87171, #ef4444);
+}
+
+.cmp-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  width: 28px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.cmp-bst-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.cmp-bst {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.cmp-bst-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 700;
+}
